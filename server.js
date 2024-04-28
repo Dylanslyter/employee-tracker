@@ -17,40 +17,135 @@ const db = mysql.createPool({
 async function getAllEmployees() {
     // Example implementation to fetch all employees from the database
     // Replace this with your actual implementation
-    const employees = await db.query('SELECT * FROM employees');
+    const employees = await db.query('SELECT * FROM employee');
     return employees;
   }
   
-
 // Function to add an employee
 async function addEmployee() {
-  // Implement adding employee functionality here
-}
-
-// Function to update employee role
-async function updateEmployeeRole() {
-  // Implement updating employee role functionality here
-}
-
-// Function to view all roles
-async function viewAllRoles() {
-  // Implement viewing all roles functionality here
-}
-
-// Function to add a role
-async function addRole() {
-  // Implement adding a role functionality here
-}
-
-// Function to view all departments
-async function viewAllDepartments() {
-  // Implement viewing all departments functionality here
-}
-
-// Function to add a department
-async function addDepartment() {
-  // Implement adding a department functionality here
-}
+    try {
+      const employeeData = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'firstName',
+          message: 'Enter the first name of the employee:'
+        },
+        {
+          type: 'input',
+          name: 'lastName',
+          message: 'Enter the last name of the employee:'
+        },
+        {
+          type: 'input',
+          name: 'roleId',
+          message: 'Enter the role ID of the employee:'
+        }
+      ]);
+  
+      await db.query('INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)', [
+        employeeData.firstName,
+        employeeData.lastName,
+        employeeData.roleId
+      ]);
+      console.log('Employee added successfully!');
+    } catch (error) {
+      console.error('Error adding employee:', error);
+    }
+  }
+  
+  async function updateEmployeeRole() {
+    try {
+      const employeeId = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'id',
+          message: 'Enter the ID of the employee whose role you want to update:'
+        }
+      ]);
+      const newRoleId = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'roleId',
+          message: 'Enter the new role ID for the employee:'
+        }
+      ]);
+      await db.query('UPDATE employee SET role_id = ? WHERE id = ?', [
+        newRoleId,
+        employeeId
+      ]);
+      console.log('Employee role updated successfully!');
+    } catch (error) {
+      console.error('Error updating employee role:', error);
+    }
+  }
+  
+  async function viewAllRoles() {
+    try {
+      const roles = await db.query('SELECT * FROM role');
+      console.log('\nAll Roles:\n');
+      console.table(roles);
+    } catch (error) {
+      console.error('Error viewing all roles:', error);
+    }
+  }
+  
+  async function addRole() {
+    try {
+      const roleData = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'title',
+          message: 'Enter the title of the role:'
+        },
+        {
+          type: 'input',
+          name: 'salary',
+          message: 'Enter the salary for the role:'
+        },
+        {
+          type: 'input',
+          name: 'departmentId',
+          message: 'Enter the department ID for the role:'
+        }
+      ]);
+      await db.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [
+        roleData.title,
+        roleData.salary,
+        roleData.departmentId
+      ]);
+      console.log('Role added successfully!');
+    } catch (error) {
+      console.error('Error adding role:', error);
+    }
+  }
+  
+  async function viewAllDepartments() {
+    try {
+      const departments = await db.query('SELECT * FROM department');
+      console.log('\nAll Departments:\n');
+      console.table(departments);
+    } catch (error) {
+      console.error('Error viewing all departments:', error);
+    }
+  }
+  
+  async function addDepartment() {
+    try {
+      const departmentData = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'name',
+          message: 'Enter the name of the department:'
+        }
+      ]);
+      await db.query('INSERT INTO department (name) VALUES (?)', [departmentData.name]);
+      console.log('Department added successfully!');
+    } catch (error) {
+      console.error('Error adding department:', error);
+    }
+  }
+  
+  
 
 // Function to start the application
 async function start() {
@@ -105,7 +200,7 @@ async function start() {
       break;
     case 'Quit':
       console.log('Goodbye!');
-      pool.end(); // Close MySQL connection pool
+      db.end(); // Close MySQL connection pool
       return;
   }
 
