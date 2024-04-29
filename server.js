@@ -12,16 +12,6 @@ const db = mysql.createPool({
   queueLimit: 0
 });
 
-// Function to view all employees
-// Assuming you have a function to fetch all employees from your database
-async function getAllEmployees() {
-    // Example implementation to fetch all employees from the database
-    // Replace this with your actual implementation
-    const employees = await db.query('SELECT * FROM employee');
-    return employees;
-  }
-  
-// Function to add an employee
 async function addEmployee() {
     try {
       const employeeData = await inquirer.prompt([
@@ -41,7 +31,7 @@ async function addEmployee() {
           message: 'Enter the role ID of the employee:'
         }
       ]);
-  
+
       await db.query('INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)', [
         employeeData.firstName,
         employeeData.lastName,
@@ -52,7 +42,6 @@ async function addEmployee() {
       console.error('Error adding employee:', error);
     }
   }
-  
   async function updateEmployeeRole() {
     try {
       const employeeId = await inquirer.prompt([
@@ -69,9 +58,15 @@ async function addEmployee() {
           message: 'Enter the new role ID for the employee:'
         }
       ]);
+  
+      // Access the roleId and id values from the objects returned by inquirer.prompt
+      const roleId = newRoleId.roleId;
+      const id = employeeId.id;
+  
+      // Execute the SQL query with placeholders and pass the values as an array
       await db.query('UPDATE employee SET role_id = ? WHERE id = ?', [
-        newRoleId,
-        employeeId
+        roleId,
+        id
       ]);
       console.log('Employee role updated successfully!');
     } catch (error) {
@@ -79,15 +74,9 @@ async function addEmployee() {
     }
   }
   
-  async function viewAllRoles() {
-    try {
-      const roles = await db.query('SELECT * FROM role');
-      console.log('\nAll Roles:\n');
-      console.table(roles);
-    } catch (error) {
-      console.error('Error viewing all roles:', error);
-    }
-  }
+  
+  
+  
   
   async function addRole() {
     try {
@@ -108,6 +97,7 @@ async function addEmployee() {
           message: 'Enter the department ID for the role:'
         }
       ]);
+  
       await db.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)', [
         roleData.title,
         roleData.salary,
@@ -115,17 +105,11 @@ async function addEmployee() {
       ]);
       console.log('Role added successfully!');
     } catch (error) {
-      console.error('Error adding role:', error);
-    }
-  }
-  
-  async function viewAllDepartments() {
-    try {
-      const departments = await db.query('SELECT * FROM department');
-      console.log('\nAll Departments:\n');
-      console.table(departments);
-    } catch (error) {
-      console.error('Error viewing all departments:', error);
+      if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+        console.error('Error adding role: The specified department ID does not exist.');
+      } else {
+        console.error('Error adding role:', error);
+      }
     }
   }
   
@@ -145,66 +129,105 @@ async function addEmployee() {
     }
   }
   
-  
+async function viewAllDepartments() {
+  try {
+    const [departments] = await db.query('SELECT * FROM department');
+    console.log('\nAll Departments:\n');
+    departments.forEach(department => {
+      console.log(`Department ID: ${department.id}`);
+      console.log(`Name: ${department.name}`);
+      console.log('---------------------'); 
+    });
+  } catch (error) {
+    console.error('Error viewing all departments:', error);
+  }
+}
 
-// Function to start the application
+async function viewAllRoles() {
+  try {
+    const [roles] = await db.query('SELECT * FROM role');
+    console.log('\nAll Roles:\n');
+    roles.forEach(role => {
+      console.log(`Role ID: ${role.id}`);
+      console.log(`Title: ${role.title}`);
+      console.log(`Salary: ${role.salary}`);
+      console.log(`Department ID: ${role.department_id}`);
+      console.log('---------------------');
+    });
+  } catch (error) {
+    console.error('Error viewing all roles:', error);
+  }
+}
+
+async function getAllEmployees() {
+  try {
+    const [employees] = await db.query('SELECT * FROM employee');
+    console.log('\nAll Employees:\n');
+    employees.forEach(employee => {
+      console.log(`Employee ID: ${employee.id}`);
+      console.log(`First Name: ${employee.first_name}`);
+      console.log(`Last Name: ${employee.last_name}`);
+      console.log(`Role ID: ${employee.role_id}`);
+      console.log('---------------------');
+    });
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+  }
+}
+
+  
 async function start() {
   console.log('Welcome to Employee Management System!');
 
-  const options = [
-    'View All Employees',
-    'Add Employee',
-    'Update Employee Role',
-    'View All Roles',
-    'Add Role',
-    'View All Departments',
-    'Add Department',
-    'Quit'
-  ];
+  try {
+    while (true) {
+      const { action } = await inquirer.prompt({
+        type: 'list',
+        name: 'action',
+        message: 'What would you like to do?',
+        choices: [
+          'View All Employees',
+          'Add Employee',
+          'Update Employee Role',
+          'View All Roles',
+          'Add Role',
+          'View All Departments',
+          'Add Department',
+          'Quit'
+        ]
+      });
 
-  const { action } = await inquirer.prompt({
-    type: 'list',
-    name: 'action',
-    message: 'What would you like to do?',
-    choices: options
-  });
-
-  switch (action) {
-    case "View All Employees":
-        // Fetch all employees from the database
-        getAllEmployees().then((employees) => {
-          // Display the employees in a formatted table
-          console.log("\nAll Employees:\n");
-          console.table(employees); // Assuming employees is an array of objects
-        }).catch((error) => {
-          console.error("Error fetching employees:", error);
-        });
-        break;
-    case 'Add Employee':
-      await addEmployee();
-      break;
-    case 'Update Employee Role':
-      await updateEmployeeRole();
-      break;
-    case 'View All Roles':
-      await viewAllRoles();
-      break;
-    case 'Add Role':
-      await addRole();
-      break;
-    case 'View All Departments':
-      await viewAllDepartments();
-      break;
-    case 'Add Department':
-      await addDepartment();
-      break;
-    case 'Quit':
-      console.log('Goodbye!');
-      db.end(); // Close MySQL connection pool
-      return;
+      switch (action) {
+        case "View All Employees":
+          await getAllEmployees();
+          break;
+        case 'Add Employee':
+          await addEmployee();
+          break;
+        case 'Update Employee Role':
+          await updateEmployeeRole();
+          break;
+        case 'View All Roles':
+          await viewAllRoles();
+          break;
+        case 'Add Role':
+          await addRole();
+          break;
+        case 'View All Departments':
+          await viewAllDepartments();
+          break;
+        case 'Add Department':
+          await addDepartment();
+          break;
+        case 'Quit':
+          console.log('Goodbye!');
+          db.end(); // Close MySQL connection pool
+          return;
+      }
+    }
+  } catch (error) {
+    console.error('An error occurred:', error);
   }
-
-  start(); // Re-prompt for next action
 }
 
-start(); // Start the application
+start(); // Start the applicationstart(); // Start the application

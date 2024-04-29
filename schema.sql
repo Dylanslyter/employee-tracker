@@ -1,3 +1,5 @@
+SET FOREIGN_KEY_CHECKS=0;
+
 -- Create Department table
 CREATE TABLE department (
     id INT PRIMARY KEY,
@@ -23,3 +25,14 @@ CREATE TABLE employee (
     FOREIGN KEY (role_id) REFERENCES role(id),
     FOREIGN KEY (manager_id) REFERENCES employee(id)
 );
+
+-- Alter Department table to add auto-increment to id column
+ALTER TABLE department MODIFY COLUMN id INT AUTO_INCREMENT;
+
+-- Alter Role table to add auto-increment to id column
+ALTER TABLE role MODIFY COLUMN id INT AUTO_INCREMENT;
+
+-- Alter Employee table to add auto-increment to id column
+ALTER TABLE employee MODIFY COLUMN id INT AUTO_INCREMENT;
+
+SET FOREIGN_KEY_CHECKS=1;
