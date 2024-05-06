@@ -1,5 +1,12 @@
 SET FOREIGN_KEY_CHECKS=0;
 
+DROP DATABASE IF EXISTS employeedb;
+
+-- Create the database
+CREATE DATABASE employeedb;
+
+-- Use the database
+USE employeedb;
 -- Create Department table
 CREATE TABLE department (
     id INT PRIMARY KEY,
@@ -36,3 +43,4 @@ ALTER TABLE role MODIFY COLUMN id INT AUTO_INCREMENT;
 ALTER TABLE employee MODIFY COLUMN id INT AUTO_INCREMENT;
 
 SET FOREIGN_KEY_CHECKS=1;
+
